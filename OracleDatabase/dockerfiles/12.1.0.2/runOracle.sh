@@ -2,13 +2,17 @@
 
 ########### Move DB files ############
 function moveFiles {
+
    if [ ! -d $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID ]; then
       mkdir -p $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/
    fi;
-   
+
    mv $ORACLE_HOME/dbs/spfile$ORACLE_SID.ora $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/
    mv $ORACLE_HOME/dbs/orapw$ORACLE_SID $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/
    mv $ORACLE_HOME/network/admin/tnsnames.ora $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/
+
+   # oracle user does not have permissions in /etc, hence cp and not mv
+   cp /etc/oratab $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/
    
    symLinkFiles;
 }
@@ -27,6 +31,20 @@ function symLinkFiles {
    if [ ! -L $ORACLE_HOME/network/admin/tnsnames.ora ]; then
       ln -s $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/tnsnames.ora $ORACLE_HOME/network/admin/tnsnames.ora
    fi;
+
+   # oracle user does not have permissions in /etc, hence cp and not ln 
+   cp $ORACLE_BASE/oradata/dbconfig/$ORACLE_SID/oratab /etc/oratab
+
+}
+
+########### SIGINT handler ############
+function _int() {
+   echo "Stopping container."
+   echo "SIGINT received, shutting down database!"
+   sqlplus / as sysdba <<EOF
+   shutdown immediate;
+EOF
+   lsnrctl stop
 }
 
 ########### SIGTERM handler ############
@@ -125,6 +143,9 @@ if [ `cat /sys/fs/cgroup/memory/memory.limit_in_bytes` -lt 2147483648 ]; then
    echo "You currently only have $((`cat /sys/fs/cgroup/memory/memory.limit_in_bytes`/1024/1024/1024)) GB allocated to the container."
    exit 1;
 fi;
+
+# Set SIGINT handler
+trap _int SIGINT
 
 # Set SIGTERM handler
 trap _term SIGTERM
