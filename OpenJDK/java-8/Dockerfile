@@ -8,6 +8,8 @@ FROM oraclelinux:latest
 
 MAINTAINER Bruno Borges <bruno.borges@oracle.com>
 
+RUN sed -i -e '/^\[main\]/aproxy=http://msn-proxy-vip.alliant-energy.com:80' /etc/yum.conf
+
 RUN yum -y install java-1.8.0-openjdk-devel && rm -rf /var/cache/yum/*
 
 ENV JAVA_HOME /usr/lib/jvm/java-openjdk

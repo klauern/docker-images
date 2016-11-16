@@ -20,7 +20,7 @@ cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 versions=( */ )
 versions=( "${versions[@]%/}" )
-url='git://github.com/oracle/docker-images'
+url='https://github.com/oracle/docker-images'
 
 echo '# Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.'
 echo '# Maintainer: Bruno Borges <bruno.borges@oracle.com> (@brunoborges)'
